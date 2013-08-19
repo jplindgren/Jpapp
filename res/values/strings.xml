@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">JP App</string>
+    <string name="action_settings">Configurações</string>
+    <string name="title_activity_display_message">DisplayMessageActivity</string>
+    <string name="send_button">Enviar</string>
+    <string name="edit_message">Entre com uma mensagem</string>
+    <string name="action_search">Pesquisa</string>
+    <string name="title_activity_searchscreen">SearchscreenActivity</string>
+    <string name="dummy_button">Dummy Button</string>
+    <string name="dummy_content">DUMMY\nCONTENT</string>
+    <string name="title_activity_connection_state">ConnectionStateActivity</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="title_activity_list">ListActivity</string>
+    <string name="listview">listview</string>
+
+</resources>
