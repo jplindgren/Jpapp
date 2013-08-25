@@ -7,6 +7,7 @@ import java.util.List;
 import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.View;
 import android.widget.AdapterView;
@@ -33,6 +34,9 @@ public class ListActivity extends Activity {
 		    }
 		    final StableArrayAdapter adapter = new StableArrayAdapter(this,android.R.layout.simple_list_item_1, list);
 		    listview.setAdapter(adapter);
+		    Log.d("BeautListHeight", String.valueOf(listview.getHeight()));
+		    Log.d("BeautListPaddingBottom", String.valueOf(listview.getListPaddingBottom()));
+		    Log.d("BeautListPaddingTop", String.valueOf(listview.getListPaddingTop()));
 		    
 		    listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 		    	 @Override

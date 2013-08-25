@@ -32,7 +32,7 @@
         <activity
             android:name="com.jplindgren.jpapp.DisplayMessageActivity"
             android:label="@string/title_activity_display_message"
-            android:parentActivityName="com.jplindgren.jpapp.MainActivity" >
+            android:parentActivityName="com.jplindgren.jpapp.SampleTextShowSample" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.jplindgren.jpapp.MainActivity" />
@@ -50,6 +50,10 @@
         <activity
             android:name="com.jplindgren.jpapp.ListActivity"
             android:label="@string/title_activity_list" >
+        </activity>
+        <activity
+            android:name="com.jplindgren.jpapp.SampleTextShowSample"
+            android:label="@string/title_activity_sample_text_show_sample" >
         </activity>
     </application>
 
