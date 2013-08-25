@@ -1,14 +1,18 @@
 package com.jplindgren.jpapp;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.Reader;
-import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -97,9 +101,9 @@ public class MainActivity extends Activity  {
     	ConnectivityManager connMgr = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
 		HttpNetworkConnection conn = new HttpNetworkConnection(connMgr);
 		
-		boolean test =conn.CheckWifiConnection(); 
-		if (test == true){
-			new GetAsyncDataTask().execute("http://echo.jsontest.com/product/jeans%20levis/price/99.99/");
+		boolean isConnected = conn.CheckWifiConnection(); 
+		if (isConnected){
+			new GetAsyncDataTask().execute("http://restapi-2.apphb.com/oferta/ofertasdodia");
 		}else{
 						
 		}
@@ -113,11 +117,11 @@ public class MainActivity extends Activity  {
 	private void showList() {		 
 		ArrayList<Oferta> ofertaList = new ArrayList<Oferta>();
 		ofertaList.clear();
-		ofertaList.add(new Oferta("Calça Jeans Levi´s", new BigDecimal("99.99"),null,0,0));
-		ofertaList.add(new Oferta("Casaco Calvin Klein", new BigDecimal("299.99"),null,0,0));
-		ofertaList.add(new Oferta("Edredon Swingão", new BigDecimal("39.99"),null,0,0));
-		ofertaList.add(new Oferta("Jogo Assasin´s Creed", new BigDecimal("69.99"),null,0,0));
-		ofertaList.add(new Oferta("Camisa do Brasil", new BigDecimal("149.99"),null,0,0));
+		ofertaList.add(new Oferta(0,"Calça Jeans Levi´s", new BigDecimal("99.99"),null,0,0));
+		ofertaList.add(new Oferta(0,"Casaco Calvin Klein", new BigDecimal("299.99"),null,0,0));
+		ofertaList.add(new Oferta(0,"Edredon Swingão", new BigDecimal("39.99"),null,0,0));
+		ofertaList.add(new Oferta(0,"Jogo Assasin´s Creed", new BigDecimal("69.99"),null,0,0));
+		ofertaList.add(new Oferta(0,"Camisa do Brasil", new BigDecimal("149.99"),null,0,0));
 		OfertaListAdapter ofertaListAdapter = new OfertaListAdapter(MainActivity.this, ofertaList);
 		listview.setAdapter(ofertaListAdapter);	 
 	 }
@@ -144,11 +148,10 @@ public class MainActivity extends Activity  {
 		   }
 		   
 		   private ArrayList<Oferta> downloadUrl(String myurl) throws IOException {
+			   ArrayList<Oferta> productList = new ArrayList<Oferta>();
 				InputStream is = null;
-				// Only display the first 500 characters of the retrieved
-				// web page content.
-				int len = 500;
-		        
+				JSONArray jObj = null;
+				
 		   	    try {
 		   	        URL url = new URL(myurl);
 		   	        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -158,42 +161,41 @@ public class MainActivity extends Activity  {
 		   	        conn.setDoInput(true);
 		   	        // Starts the query
 		   	        conn.connect();
-		   	        int response = conn.getResponseCode();
-		   	        Log.d("debug response", "The response is: " + response);
-		   	        is = conn.getInputStream();
+		   	        BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream(),"utf-8"));
 		
-		   	        // Convert the InputStream into a string
-		   	        String contentAsString = readIt(is, len);
-		   	        //return contentAsString;
-		   	        
-		   	        ArrayList<Oferta> productList = new ArrayList<Oferta>();
-					productList.clear();
-					productList.add(new Oferta("Bone Adidas", new BigDecimal("39.99"),null,0,0));
-					productList.add(new Oferta("Camisa Social C.A.", new BigDecimal("49.99"),null,0,0));
-					productList.add(new Oferta("Impressora HP Laser", new BigDecimal("499.99"),null,0,0));
-					productList.add(new Oferta("Monitor LG LED 21'", new BigDecimal("699.99"),null,0,0));
-					productList.add(new Oferta("Conjunto de Cordas de Guitarra A126", new BigDecimal("19.99"),null,0,0));
-					productList.add(new Oferta("Mousepad SteelSeries", new BigDecimal("89.99"),null,0,0));
-					productList.add(new Oferta("Mochila Sansonite 20l", new BigDecimal("189.99"),null,0,0));
-					productList.add(new Oferta("Bermuda Sandpiper", new BigDecimal("59.99"),null,0,0));
-					productList.add(new Oferta("Camisa Polo Sandpiper", new BigDecimal("109.99"),null,0,0));
-					productList.add(new Oferta("Cortinas Pet V6", new BigDecimal("109.99"),null,0,0));
-		   	        return productList;
-		   	    } finally {
+		   	        String line;
+		   	        StringBuilder sb = new StringBuilder();
+				    while ((line = in.readLine()) != null) {
+				    	sb.append(line);						
+					}
+				    
+				    try {
+				    	jObj = new JSONArray(sb.toString());
+			        } catch (JSONException e) {
+			            Log.e("JSON Parser", "Error parsing data " + e.toString());
+			        }
+				    
+				    for (int i = 0; i < jObj.length(); i++) {
+						JSONObject jo = jObj.getJSONObject(i);
+						String nomeProduto =  jo.getString("NomeProduto");
+						String preco = jo.getString("Preco");
+					    
+						productList.add(new Oferta(0,nomeProduto,new BigDecimal(preco),null,0,0));
+				    }
+		   	    }catch (MalformedURLException e) {
+		            e.printStackTrace();
+		        } catch (IOException e) {
+		            e.printStackTrace();
+		        } catch (JSONException e) {
+		            e.printStackTrace();
+		        } finally {
 		   	        if (is != null) {
 		   	            is.close();
 		   	        } 
 		   	    }
+		   	    return productList;
 		   	}
 		   	
-	   		// Reads an InputStream and converts it to a String.
-			public String readIt(InputStream stream, int len) throws IOException, UnsupportedEncodingException {
-			    Reader reader = null;
-			    reader = new InputStreamReader(stream, "UTF-8");        
-			   	    char[] buffer = new char[len];
-			   	    reader.read(buffer);
-			   	    return new String(buffer);
-	   		}
 		}
     
 }//class
