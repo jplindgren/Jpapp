@@ -9,6 +9,7 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Date;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -16,6 +17,7 @@ import org.json.JSONObject;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.net.ConnectivityManager;
@@ -24,10 +26,14 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import com.jplindgren.jpapp.httpconnection.HttpNetworkConnection;
 import com.jplindgren.jpapp.model.Oferta;
+import com.jplindgren.jpapp.model.OfertaFactory;
 import com.jplindgren.jpapp.util.OfertaListAdapter;
 
 @SuppressLint("NewApi")
@@ -41,6 +47,26 @@ public class MainActivity extends Activity  {
 		setContentView(R.layout.activity_main);
 		
 		listview = (ListView) findViewById(R.id.listview);
+		listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+	    	 @Override
+	         public void onItemClick(AdapterView<?> parent, final View view,int position, long id) {
+	    		 //final String item = (String) parent.getItemAtPosition(position);
+	    		 view.animate().setDuration(1000).alpha(0).withEndAction(new Runnable() {
+	                 @Override
+	                 public void run() {
+	                   //list.remove(item);
+	                   //adapter.notifyDataSetChanged();
+	                   //view.setAlpha(1);
+	                	 Context context = getApplicationContext();
+	                	 CharSequence text = "+ 1 Hellow Wolrd!";
+	                	 int duration = Toast.LENGTH_SHORT;
+
+	                	 Toast toast = Toast.makeText(context, text, duration);
+	                	 toast.show();
+	                 }
+	    		 });
+	         }		    	
+	    });
 		showList();
 		
 		/*
@@ -101,13 +127,23 @@ public class MainActivity extends Activity  {
     	ConnectivityManager connMgr = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
 		HttpNetworkConnection conn = new HttpNetworkConnection(connMgr);
 		
-		boolean isConnected = conn.CheckWifiConnection(); 
+		boolean isConnected = conn.CheckConnection(); 
 		if (isConnected){
 			new GetAsyncDataTask().execute("http://restapi-2.apphb.com/oferta/ofertasdodia");
 		}else{
-						
+			ShowMessage();		
 		}
     } 
+    
+    private void ShowMessage(){
+    	AlertDialog.Builder builder = new AlertDialog.Builder(this);
+    	// 2. Chain together various setter methods to set the dialog characteristics
+    	builder.setMessage("Não há conexão! Habilite o 3g ou o Wifi")
+    	       .setTitle("Nada feito");
+    	// 3. Get the AlertDialog from create()
+    	AlertDialog dialog = builder.create();
+    	dialog.show();
+    }
     
     public void openAnotherBehavior(){
     	Intent intent = new Intent(this,SampleTextShowSample.class);
@@ -117,11 +153,11 @@ public class MainActivity extends Activity  {
 	private void showList() {		 
 		ArrayList<Oferta> ofertaList = new ArrayList<Oferta>();
 		ofertaList.clear();
-		ofertaList.add(new Oferta(0,"Calça Jeans Levi´s", new BigDecimal("99.99"),null,0,0));
-		ofertaList.add(new Oferta(0,"Casaco Calvin Klein", new BigDecimal("299.99"),null,0,0));
-		ofertaList.add(new Oferta(0,"Edredon Swingão", new BigDecimal("39.99"),null,0,0));
-		ofertaList.add(new Oferta(0,"Jogo Assasin´s Creed", new BigDecimal("69.99"),null,0,0));
-		ofertaList.add(new Oferta(0,"Camisa do Brasil", new BigDecimal("149.99"),null,0,0));
+		ofertaList.add(new Oferta(1,"Calça Jeans Levi´s", new BigDecimal("99.99"),null,0,0,"categoria",new Date()));
+		ofertaList.add(new Oferta(2,"Casaco Calvin Klein", new BigDecimal("299.99"),null,0,0,"categoria",new Date()));
+		ofertaList.add(new Oferta(3,"Edredon Swingão", new BigDecimal("39.99"),null,0,0,"categoria",new Date()));
+		ofertaList.add(new Oferta(4,"Jogo Assasin´s Creed", new BigDecimal("69.99"),null,0,0,"categoria",new Date()));
+		ofertaList.add(new Oferta(5,"Camisa do Brasil", new BigDecimal("149.99"),null,0,0,"categoria",new Date()));
 		OfertaListAdapter ofertaListAdapter = new OfertaListAdapter(MainActivity.this, ofertaList);
 		listview.setAdapter(ofertaListAdapter);	 
 	 }
@@ -131,8 +167,10 @@ public class MainActivity extends Activity  {
 		   protected ArrayList<Oferta> doInBackground(String... urls) {		         
 		       // params comes from the execute() call: params[0] is the url.			   
 		       try {
-		           return downloadUrl(urls[0]);
+		    	   ArrayList<Oferta> listaOfertas = downloadUrl(urls[0]);
+		    	   return listaOfertas;
 		       } catch (IOException e) {
+		    	    e.printStackTrace();
 	    	   		return new ArrayList<Oferta>();
 		           //return "Unable to retrieve web page. URL may be invalid.";
 		       }
@@ -176,11 +214,9 @@ public class MainActivity extends Activity  {
 			        }
 				    
 				    for (int i = 0; i < jObj.length(); i++) {
-						JSONObject jo = jObj.getJSONObject(i);
-						String nomeProduto =  jo.getString("NomeProduto");
-						String preco = jo.getString("Preco");
-					    
-						productList.add(new Oferta(0,nomeProduto,new BigDecimal(preco),null,0,0));
+						JSONObject jsonOferta = jObj.getJSONObject(i);
+						Oferta oferta = OfertaFactory.Criar(jsonOferta);
+						productList.add(oferta);
 				    }
 		   	    }catch (MalformedURLException e) {
 		            e.printStackTrace();
@@ -194,8 +230,7 @@ public class MainActivity extends Activity  {
 		   	        } 
 		   	    }
 		   	    return productList;
-		   	}
-		   	
+		   	}		   	
 		}
     
 }//class

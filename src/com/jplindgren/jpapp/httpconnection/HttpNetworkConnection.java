@@ -14,8 +14,9 @@ public class HttpNetworkConnection {
 		
 	    if (networkInfo != null && networkInfo.isConnected()) {
 	        return true;
+	    }else{
+	    	return false;
 	    }
-	    return false;
 	}
 	
 	public boolean CheckWifiConnection(){
