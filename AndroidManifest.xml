@@ -10,10 +10,9 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
 
     <application
         android:allowBackup="true"
@@ -54,6 +53,14 @@
         <activity
             android:name="com.jplindgren.jpapp.SampleTextShowSample"
             android:label="@string/title_activity_sample_text_show_sample" >
+        </activity>
+        <activity
+            android:name="com.jplindgren.jpapp.ShowOfertaActivity"
+            android:label="@string/title_activity_show_oferta"
+            android:parentActivityName="com.jplindgren.jpapp.MainActivity" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.jplindgren.jpapp.MainActivity" />
         </activity>
     </application>
 

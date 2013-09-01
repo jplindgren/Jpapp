@@ -18,6 +18,7 @@ import org.json.JSONObject;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.net.ConnectivityManager;
@@ -29,7 +30,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
-import android.widget.Toast;
 
 import com.jplindgren.jpapp.httpconnection.HttpNetworkConnection;
 import com.jplindgren.jpapp.model.Oferta;
@@ -40,6 +40,8 @@ import com.jplindgren.jpapp.util.OfertaListAdapter;
 public class MainActivity extends Activity  {    
 	
 	ListView listview;
+	public final static String ID_OFERTA_SELECIONADA = "com.jplindgren.jpapp.IdOfertaSelecionada";
+	public ProgressDialog loadingDialog;
   
     @Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -50,20 +52,22 @@ public class MainActivity extends Activity  {
 		listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 	    	 @Override
 	         public void onItemClick(AdapterView<?> parent, final View view,int position, long id) {
-	    		 //final String item = (String) parent.getItemAtPosition(position);
+	    		 final Oferta selectedItem = (Oferta) parent.getItemAtPosition(position);
 	    		 view.animate().setDuration(1000).alpha(0).withEndAction(new Runnable() {
 	                 @Override
-	                 public void run() {
-	                   //list.remove(item);
-	                   //adapter.notifyDataSetChanged();
-	                   //view.setAlpha(1);
+	                 public void run() {	
+	                	 view.setAlpha(1);
+	                	 OpenOferta(selectedItem);
+	                /*
 	                	 Context context = getApplicationContext();
 	                	 CharSequence text = "+ 1 Hellow Wolrd!";
 	                	 int duration = Toast.LENGTH_SHORT;
 
 	                	 Toast toast = Toast.makeText(context, text, duration);
 	                	 toast.show();
+	                	 */
 	                 }
+	                 
 	    		 });
 	         }		    	
 	    });
@@ -101,6 +105,12 @@ public class MainActivity extends Activity  {
 		    */
 	}
 
+    public void OpenOferta(Oferta oferta){
+    	Intent intent = new Intent(this,ShowOfertaActivity.class);
+    	intent.putExtra(ID_OFERTA_SELECIONADA, oferta.getId());
+    	startActivity(intent);
+    }
+    
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
@@ -129,7 +139,7 @@ public class MainActivity extends Activity  {
 		
 		boolean isConnected = conn.CheckConnection(); 
 		if (isConnected){
-			new GetAsyncDataTask().execute("http://restapi-2.apphb.com/oferta/ofertasdodia");
+			new GetAsyncDataTask(this).execute("http://restapi-2.apphb.com/oferta/ofertasdodia");
 		}else{
 			ShowMessage();		
 		}
@@ -163,6 +173,12 @@ public class MainActivity extends Activity  {
 	 }
     
 	private class GetAsyncDataTask extends AsyncTask<String, Void, ArrayList<Oferta>> {
+		  Context context;
+		  
+		  	GetAsyncDataTask(Context context) {
+		        this.context = context;
+		    }
+		  
 		   @Override
 		   protected ArrayList<Oferta> doInBackground(String... urls) {		         
 		       // params comes from the execute() call: params[0] is the url.			   
@@ -177,12 +193,22 @@ public class MainActivity extends Activity  {
 		       
 		   }
 		   
+		   @Override
+		    protected void onPreExecute() {
+		        super.onPreExecute();
+
+		        loadingDialog = new ProgressDialog(context);
+		        loadingDialog.setMessage("Carregando...");
+		        loadingDialog.show();
+		    }
+		   
 		   // onPostExecute displays the results of the AsyncTask.
 		   @Override
 		   protected void onPostExecute(ArrayList<Oferta> listaProdutos) {
+			   loadingDialog.dismiss();
 			   listview = (ListView) findViewById(R.id.listview);
 			   OfertaListAdapter productListAdapter = new OfertaListAdapter(MainActivity.this, listaProdutos);
-			   listview.setAdapter(productListAdapter);	
+			   listview.setAdapter(productListAdapter);
 		   }
 		   
 		   private ArrayList<Oferta> downloadUrl(String myurl) throws IOException {

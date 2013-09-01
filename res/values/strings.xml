@@ -5,6 +5,7 @@
     <string name="action_settings">Configurações</string>
     <string name="title_activity_display_message">DisplayMessageActivity</string>
     <string name="send_button">Enviar</string>
+    <string name="go_button">GO!</string>
     <string name="edit_message">Entre com uma mensagem</string>
     <string name="action_search">Buscar</string>
     <string name="action_anotherOne">Outros</string>
@@ -16,4 +17,6 @@
     <string name="title_activity_list">ListActivity</string>
     <string name="listview">listview</string>
     <string name="title_activity_sample_text_show_sample">SampleTextShowSample</string>
+    <string name="title_activity_show_oferta">ShowOfertaActivity</string>
+
 </resources>

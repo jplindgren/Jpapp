@@ -46,6 +46,7 @@ public class OfertaListAdapter extends BaseAdapter {
             convertView = inflater.inflate(R.layout.produto_list_row, null);
  
         }
+        
         TextView tvNomeProduto = (TextView) convertView.findViewById(R.id.product_name);        
         tvNomeProduto.setText(ofertaItem.getNomeProduto());
         
