@@ -14,19 +14,41 @@
         android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
         android:textAppearance="?android:attr/textAppearanceLarge" />
-    
-     <Button 
-         android:layout_width="wrap_content"
-         android:layout_height="wrap_content"
-         android:layout_alignParentRight="true"
-         android:hint="@string/go_button"
-         android:onClick="followOferta" /> 
-         
-     <TextView
+
+    <Button
+        android:id="@+id/button2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:hint="@string/go_button"
+        android:onClick="followOferta" />
+
+    <TextView
         android:id="@+id/myLocationText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:textAppearance="?android:attr/textAppearance" />
+
+    <Button
+        android:id="@+id/btnShowMap"
+        style="?android:attr/buttonStyleSmall"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignRight="@+id/button2"
+        android:layout_below="@+id/tvNomeProduto"
+        android:layout_marginTop="15dp"
+        android:onClick="showMap"
+        android:text="@string/GoMap" />
+
+    <Button
+        android:id="@+id/button1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/myLocationText"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="64dp"
+        android:onClick="goActivity"
+        android:text="Teste Swipe Screen" />
 
 </RelativeLayout>

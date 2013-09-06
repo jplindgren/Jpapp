@@ -51,7 +51,16 @@ public class ShowOfertaActivity extends Activity {
 	 */
 	private void setupActionBar() {
 		getActionBar().setDisplayHomeAsUpEnabled(true);
-
+	}
+	
+	public void showMap(View view){
+		Intent intent = new Intent(this, TestActivity.class);
+		startActivity(intent);
+	}
+	
+	public void goActivity(View view){
+		Intent intent = new Intent(this, MapNavigationActivity.class);
+		startActivity(intent);
 	}
 	
 	public void followOferta(View view){					

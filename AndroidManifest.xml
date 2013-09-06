@@ -12,13 +12,14 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 
     <application
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
+        <uses-library android:name="com.google.android.maps" />
         <activity
             android:name="com.jplindgren.jpapp.MainActivity"
             android:label="@string/app_name" >
@@ -61,6 +62,14 @@
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.jplindgren.jpapp.MainActivity" />
+        </activity>
+        <activity
+            android:name="com.jplindgren.jpapp.MapNavigationActivity"
+            android:label="@string/title_activity_map_navigation" >
+        </activity>
+        <activity
+            android:name="com.jplindgren.jpapp.TestActivity"
+            android:label="@string/title_activity_test" >
         </activity>
     </application>
 

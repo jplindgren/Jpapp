@@ -18,5 +18,10 @@
     <string name="listview">listview</string>
     <string name="title_activity_sample_text_show_sample">SampleTextShowSample</string>
     <string name="title_activity_show_oferta">ShowOfertaActivity</string>
+    <string name="GoMap">Go Map!</string>
+    <string name="title_activity_map_navigation">Navegação</string>
+    <string name="MapNagivation_section1">Bússola</string>
+    <string name="MapNagivation_section2">Mapa</string>
+    <string name="title_activity_test">TestActivity</string>
 
 </resources>
