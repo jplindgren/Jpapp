@@ -8,12 +8,22 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context=".TestActivity" >
 
+    <!-- 
 <com.google.android.maps.MapView
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/mapview"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:clickable="true"
-/>
-    
+    android:apiKey="AIzaSyAsNtmFqHm4FCPBlfJEp8PZhSFVE2UeAa4"
+/>    
+     -->
+
+
+ <fragment
+    android:id="@+id/mapview"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    class="com.google.android.gms.maps.SupportMapFragment"/>
+
 </RelativeLayout>

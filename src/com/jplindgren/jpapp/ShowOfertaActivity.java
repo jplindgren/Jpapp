@@ -7,6 +7,8 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.List;
+import java.util.Locale;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -16,6 +18,9 @@ import android.app.PendingIntent;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -27,6 +32,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 
+import com.jplindgren.jpapp.broadcast.ProximityIntentReceiver;
 import com.jplindgren.jpapp.location.LocationClient;
 import com.jplindgren.jpapp.location.MyLocationUpdateReceiver;
 import com.jplindgren.jpapp.model.Oferta;
@@ -35,6 +41,7 @@ import com.jplindgren.jpapp.model.OfertaFactory;
 public class ShowOfertaActivity extends Activity {
 
 	public ProgressDialog loadingDialog;
+	//LocationListener myLocationListener;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -42,6 +49,9 @@ public class ShowOfertaActivity extends Activity {
 		setContentView(R.layout.activity_show_oferta);
 		// Show the Up button in the action bar.
 		setupActionBar();
+		
+		IntentFilter filter = new IntentFilter(TREASURE_PROXIMITY_ALERT);
+		registerReceiver(new ProximityIntentReceiver(), filter);
 		
 		popularOferta();
 	}
@@ -75,12 +85,44 @@ public class ShowOfertaActivity extends Activity {
 		requestLocationUpdatesUsingLocationListener(locationClient);
 	}
 	
+	@Override
+	protected void onPause() {
+		LocationManager locationManager = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
+		LocationClient locationClient = new LocationClient(locationManager);	
+		unregisterLocationUpdatesUsingLocationListernet(locationClient);
+		super.onPause();
+	}
+
+	@Override
+	protected void onResume() {
+		LocationManager locationManager = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
+		LocationClient locationClient = new LocationClient(locationManager);	
+		requestLocationUpdatesUsingLocationListener(locationClient);
+		super.onResume();
+	}
+	
+	private void unregisterLocationUpdatesUsingLocationListernet(LocationClient locationClient){
+		locationClient.getLocationManager().removeUpdates(myLocationListener);
+	}
+	
+	private LocationListener myLocationListener = new LocationListener() {
+		public void onLocationChanged(Location location) {
+			updateCurrentLocationTextView(location);
+		}
+		public void onProviderDisabled(String provider) {
+		}
+		public void onProviderEnabled(String provider) {
+			//registerListener();
+		}
+		public void onStatusChanged(String provider, int status, Bundle extras) {}
+	};
+
 	private void requestLocationUpdatesUsingLocationListener(LocationClient locationClient){
 		//REFATORAR: Colocar LocationClient como observer da View. Ao atualizar o método o proprio locationclient dispara o método	
 		int tempoMinimoEntreAtualizacao = 5000; // milliseconds
 		int distanciaMinima = 5; // meters
 		
-		LocationListener myLocationListener = new LocationListener() {
+		myLocationListener = new LocationListener() {
 			public void onLocationChanged(Location location) {
 				updateCurrentLocationTextView(location);
 			}
@@ -124,8 +166,43 @@ public class ShowOfertaActivity extends Activity {
 			double lat = location.getLatitude();
 			double lng = location.getLongitude();
 			latLongString = "Lat:" + lat + "\nLong:" + lng;
-		}
-		myLocationText.setText("Você está em " + latLongString);
+		}		
+		
+		myLocationText.setText("Você está em " + latLongString + "\n" + getCurrentAddress(location));
+	}
+	
+	private String getCurrentAddress(Location location){
+		String addressString = "Endereço desconhecido";
+		Geocoder gc = new Geocoder(this, Locale.getDefault());
+		try {
+			List<Address> addresses = gc.getFromLocation(location.getLatitude(), location.getLongitude(), 1);
+			StringBuilder sb = new StringBuilder();
+			if (addresses.size() > 0) {
+				Address address = addresses.get(0);
+				for (int i = 0; i < address.getMaxAddressLineIndex(); i++)
+					sb.append(address.getAddressLine(i)).append("\n");
+				
+				sb.append(address.getLocality()).append("\n");
+				sb.append(address.getPostalCode()).append("\n");
+				sb.append(address.getCountryName());
+			}
+			addressString = sb.toString();
+		} catch (IOException e) {}
+		return addressString;
+	}
+	
+	
+	private static final String TREASURE_PROXIMITY_ALERT = "com.paad.treasurealert";
+	private void setProximityAlert() {
+		LocationManager locationManager = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
+		LocationClient locationClient = new LocationClient(locationManager);
+		double lat = -22.9065641;
+		double lng = -43.0867279;
+		float radius = 100f; // meters
+		long expiration = -1; // do not expire
+		Intent intent = new Intent(TREASURE_PROXIMITY_ALERT);
+		PendingIntent proximityIntent = PendingIntent.getBroadcast(this, -1, intent,0);
+		locationClient.getLocationManager().addProximityAlert(lat, lng, radius,expiration,proximityIntent);
 	}
 	
 	private void popularOferta(){

@@ -23,5 +23,6 @@
     <string name="MapNagivation_section1">Bússola</string>
     <string name="MapNagivation_section2">Mapa</string>
     <string name="title_activity_test">TestActivity</string>
+    <string name="title_activity_cu">CuActivity</string>
 
 </resources>
