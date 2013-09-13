@@ -1,17 +1,8 @@
 package com.jplindgren.jpapp;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.List;
 import java.util.Locale;
-
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import android.app.Activity;
 import android.app.PendingIntent;
@@ -22,26 +13,37 @@ import android.content.IntentFilter;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
-import android.location.LocationListener;
 import android.location.LocationManager;
+import android.net.ConnectivityManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.HandlerThread;
+import android.os.Looper;
+import android.provider.Settings;
 import android.support.v4.app.NavUtils;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 
+import com.jplindgren.jpapp.broadcast.NetworkProviderStatusReceiver;
 import com.jplindgren.jpapp.broadcast.ProximityIntentReceiver;
+import com.jplindgren.jpapp.httpconnection.HttpNetworkConnection;
 import com.jplindgren.jpapp.location.LocationClient;
-import com.jplindgren.jpapp.location.MyLocationUpdateReceiver;
+import com.jplindgren.jpapp.location.MyLocationListener;
 import com.jplindgren.jpapp.model.Oferta;
-import com.jplindgren.jpapp.model.OfertaFactory;
+import com.jplindgren.jpapp.servico.OfertaServico;
+import com.jplindgren.jpapp.servico.message.RequestGetOferta;
+import com.jplindgren.jpapp.util.AlertUserDialog;
 
-public class ShowOfertaActivity extends Activity {
-
-	public ProgressDialog loadingDialog;
-	//LocationListener myLocationListener;
+public class ShowOfertaActivity extends Activity implements LocationSubscriber {
+	Looper looper;
+	NetworkProviderStatusReceiver _statusReceiver;
+	LocationClient locationClient;
+	HttpNetworkConnection httpNetworkConnection;
+	
+	LocationSubject myLocationListener;
+	ProgressDialog loadingDialog;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -54,6 +56,18 @@ public class ShowOfertaActivity extends Activity {
 		registerReceiver(new ProximityIntentReceiver(), filter);
 		
 		popularOferta();
+	}
+	
+	@Override
+	public void locationChanged(Location location) {
+		final Location theLocation = location; // <--- tipo um closure
+		//vamos executar na thread correta da UI
+		this.runOnUiThread(new Runnable() {			
+			@Override
+			public void run() {
+				updateCurrentLocationTextView(theLocation);				
+			}
+		});		
 	}
 
 	/**
@@ -74,88 +88,85 @@ public class ShowOfertaActivity extends Activity {
 	}
 	
 	public void followOferta(View view){					
-		LocationManager locationManager = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
-		LocationClient locationClient = new LocationClient(locationManager);		
-		
+		LocationClient locationClient = getLocationClient();
 		
 		Location location = locationClient.getLastKnowLocation();
 		
-		//REFATORAR: Colocar LocationClient como observer da View. Ao atualizar o método o proprio locationclient dispara o método
 		updateCurrentLocationTextView(location);
 		requestLocationUpdatesUsingLocationListener(locationClient);
 	}
 	
+	public LocationClient getLocationClient(){
+		if (locationClient == null){
+			LocationManager locationManager = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
+			locationClient = new LocationClient(locationManager);			
+		}
+		return locationClient;		
+	}
+	
+	private HttpNetworkConnection getHttpNetworkConnection(){
+		if (httpNetworkConnection == null){
+			ConnectivityManager connMgr = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
+			httpNetworkConnection = new HttpNetworkConnection(connMgr);
+		}
+		return httpNetworkConnection;
+	}
+	
+	
 	@Override
 	protected void onPause() {
-		LocationManager locationManager = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
-		LocationClient locationClient = new LocationClient(locationManager);	
-		unregisterLocationUpdatesUsingLocationListernet(locationClient);
+		cleanResources();
 		super.onPause();
 	}
 
 	@Override
 	protected void onResume() {
-		LocationManager locationManager = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
-		LocationClient locationClient = new LocationClient(locationManager);	
-		requestLocationUpdatesUsingLocationListener(locationClient);
+		requestLocationUpdatesUsingLocationListener(getLocationClient());
 		super.onResume();
+	}	
+	
+	@Override
+	protected void onDestroy() {
+		cleanResources();		
+		super.onDestroy();
 	}
 	
-	private void unregisterLocationUpdatesUsingLocationListernet(LocationClient locationClient){
-		locationClient.getLocationManager().removeUpdates(myLocationListener);
+	private void cleanResources(){
+		unregisterLocationUpdatesUsingLocationListerner(getLocationClient());
+		
+		if (looper != null){
+			looper.quit();
+			looper = null;
+		}
 	}
-	
-	private LocationListener myLocationListener = new LocationListener() {
-		public void onLocationChanged(Location location) {
-			updateCurrentLocationTextView(location);
+
+	private void unregisterLocationUpdatesUsingLocationListerner(LocationClient locationClient){		
+		if (myLocationListener != null){
+			myLocationListener.unRegisterSubscriber(this);
+			getLocationClient().stopListening(myLocationListener);
+			myLocationListener = null;
 		}
-		public void onProviderDisabled(String provider) {
+		
+		if (_statusReceiver != null){
+			_statusReceiver.stop(this);
+			_statusReceiver = null;
 		}
-		public void onProviderEnabled(String provider) {
-			//registerListener();
-		}
-		public void onStatusChanged(String provider, int status, Bundle extras) {}
-	};
+	}
 
 	private void requestLocationUpdatesUsingLocationListener(LocationClient locationClient){
-		//REFATORAR: Colocar LocationClient como observer da View. Ao atualizar o método o proprio locationclient dispara o método	
-		int tempoMinimoEntreAtualizacao = 5000; // milliseconds
-		int distanciaMinima = 5; // meters
+		HandlerThread locationThread = new HandlerThread("locationThread");
+		locationThread.start();
+		looper = locationThread.getLooper();
 		
-		myLocationListener = new LocationListener() {
-			public void onLocationChanged(Location location) {
-				updateCurrentLocationTextView(location);
-			}
-			public void onProviderDisabled(String provider){
-				// Update application if provider disabled.
-			}
-			public void onProviderEnabled(String provider){
-				// Update application if provider enabled.
-			}
+		//if (confirmNetworkProviderAvailable(locationClient)){
+			_statusReceiver = new NetworkProviderStatusReceiver();
+			_statusReceiver.start(this);
 			
-			public void onStatusChanged(String provider, int status, Bundle extras){
-				// Update application if provider hardware status changed.
-			}
-		};
-		//locationClient.getLocationManager().requestLocationUpdates(locationClient.getBestProvider(), tempoMinimoEntreAtualizacao, distanciaMinima, myLocationListener);
-		locationClient.getLocationManager().requestLocationUpdates(locationClient.getBestProvider(), 0, 0, myLocationListener);
-		
-		//locationManager.removeUpdates(myLocationListener); //<-- se quiser remover é so usar
-	}
-	
-	private void requestLocationUpdatesUsingPendingIntent(LocationManager locationManager){
-		String provider = LocationManager.GPS_PROVIDER;
-		int tempoMinimoEntreAtualizacao = 5000; // milliseconds
-		int distanciaMinima = 5; // meters
-		final int locationUpdateRC = 0;
-		
-		int flags = PendingIntent.FLAG_UPDATE_CURRENT;
-		Intent intent = new Intent(this, MyLocationUpdateReceiver.class); // <-- MyLocationUpdateReceiver é um broadcast
-		PendingIntent pendingIntent = PendingIntent.getBroadcast(this,
-		locationUpdateRC, intent, flags);
-		locationManager.requestLocationUpdates(provider, tempoMinimoEntreAtualizacao,distanciaMinima, pendingIntent);
-		
-		//locationManager.removeUpdates(pendingIntent); //<-- se quiser remover é so usar
+			myLocationListener = new MyLocationListener();
+			myLocationListener.registerSubscriber(this);
+			
+			getLocationClient().startListening(myLocationListener, looper);
+		//}
 	}
 	
 	private void updateCurrentLocationTextView(Location location){
@@ -194,21 +205,19 @@ public class ShowOfertaActivity extends Activity {
 	
 	private static final String TREASURE_PROXIMITY_ALERT = "com.paad.treasurealert";
 	private void setProximityAlert() {
-		LocationManager locationManager = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
-		LocationClient locationClient = new LocationClient(locationManager);
 		double lat = -22.9065641;
 		double lng = -43.0867279;
 		float radius = 100f; // meters
 		long expiration = -1; // do not expire
 		Intent intent = new Intent(TREASURE_PROXIMITY_ALERT);
 		PendingIntent proximityIntent = PendingIntent.getBroadcast(this, -1, intent,0);
-		locationClient.getLocationManager().addProximityAlert(lat, lng, radius,expiration,proximityIntent);
+		getLocationClient().getLocationManager().addProximityAlert(lat, lng, radius,expiration,proximityIntent);
 	}
 	
 	private void popularOferta(){
 		Intent intent = getIntent();
 		int idOferta = intent.getIntExtra(MainActivity.ID_OFERTA_SELECIONADA, 0);
-		new GetAsyncDataTask(this).execute("http://restapi-2.apphb.com/oferta/getoferta/" + idOferta);
+		new GetAsyncDataTask(this).execute(new RequestGetOferta(idOferta));
 	}
 
 	@Override
@@ -216,6 +225,22 @@ public class ShowOfertaActivity extends Activity {
 		// Inflate the menu; this adds items to the action bar if it is present.
 		getMenuInflater().inflate(R.menu.show_oferta, menu);
 		return true;
+	}
+	
+	private boolean confirmNetworkProviderAvailable(LocationClient locationClient){
+		return locationClient.confirmProviderEnabled() &&
+				confirmAirPlaineModeIsOff() &&
+				getHttpNetworkConnection().CheckWifiConnection();				
+	}
+	
+	private boolean confirmAirPlaineModeIsOff(){
+		boolean isOff = Settings.System.getInt(getContentResolver(), Settings.System.AIRPLANE_MODE_ON, 0) == 1;
+		
+		if (isOff){
+			AlertUserDialog alert = new AlertUserDialog("Por favor desabilite o modo avião", "");
+			alert.show(getFragmentManager(), null);
+		}
+		return isOff;
 	}
 
 	@Override
@@ -228,7 +253,7 @@ public class ShowOfertaActivity extends Activity {
 		return super.onOptionsItemSelected(item);
 	}
 	
-	private class GetAsyncDataTask extends AsyncTask<String, Void, Oferta> {		
+	private class GetAsyncDataTask extends AsyncTask<Object, Void, Oferta> {		
 		Context context;
 		  
 		GetAsyncDataTask(Context context) {
@@ -236,15 +261,18 @@ public class ShowOfertaActivity extends Activity {
 		}
 		
 	   @Override
-	   protected Oferta doInBackground(String... urls) {		         			   
+	   protected Oferta doInBackground(Object...requests) {
+		   RequestGetOferta request = (RequestGetOferta) requests[0];
+		   OfertaServico ofertaServico = new OfertaServico();
+	       Oferta oferta = null;
 	       try {
-	    	   Oferta oferta = downloadOferta(urls[0]);
-	    	   return oferta;
+				oferta = ofertaServico.getOferta(request.getIdOferta());
+	       } catch (NumberFormatException e) {
+				e.printStackTrace();
 	       } catch (IOException e) {
-	    	    e.printStackTrace();
-    	   		return null;
+				e.printStackTrace();
 	       }
-	       
+		   return oferta;	       
 	   }
 	   
 	   @Override
@@ -261,48 +289,33 @@ public class ShowOfertaActivity extends Activity {
 	   protected void onPostExecute(Oferta oferta) {
 		   loadingDialog.dismiss();
 		   
-		   TextView tvNomeProduto = (TextView)findViewById(R.id.tvNomeProduto);
-		   tvNomeProduto.setText(oferta.getNomeProduto());
+		   if (oferta != null){
+			   TextView tvNomeProduto = (TextView)findViewById(R.id.tvNomeProduto);
+			   tvNomeProduto.setText(oferta.getNomeProduto());
+		   }else{
+			   AlertUserDialog alert = new AlertUserDialog("Ops! Não encontramos essa oferta! Você está conexão a internet?", "");
+			   alert.show(getFragmentManager(), null);
+		   }
 	   }
 	   
-	   private Oferta downloadOferta(String myurl) throws IOException {
-		   	Oferta oferta = null;
-			InputStream is = null;
-			
-	   	    try {
-	   	        URL url = new URL(myurl);
-	   	        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-	   	        conn.setReadTimeout(10000 /* milliseconds */);
-	   	        conn.setConnectTimeout(15000 /* milliseconds */);
-	   	        conn.setRequestMethod("GET");
-	   	        conn.setDoInput(true);
-	   	        // Starts the query
-	   	        conn.connect();
-	   	        BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream(),"utf-8"));
-	
-	   	        String line;
-	   	        StringBuilder sb = new StringBuilder();
-			    while ((line = in.readLine()) != null) {
-			    	sb.append(line);						
-				}
-			    
-				JSONObject jsonOferta = new JSONObject(sb.toString());
-				oferta = OfertaFactory.Criar(jsonOferta);
-			    
-	   	    }catch (MalformedURLException e) {
-	            e.printStackTrace();
-	        } catch (IOException e) {
-	            e.printStackTrace();
-	        } catch (JSONException e) {
-	            e.printStackTrace();
-	        } finally {
-	   	        if (is != null) {
-	   	            is.close();
-	   	        } 
-	   	    }
-	   	    return oferta;
-	   	}		   	
-	} //inner class
+	 } //inner class
  
+	
+	/*
+	 private void requestLocationUpdatesUsingPendingIntent(LocationManager locationManager){
+		String provider = LocationManager.GPS_PROVIDER;
+		int tempoMinimoEntreAtualizacao = 5000; // milliseconds
+		int distanciaMinima = 5; // meters
+		final int locationUpdateRC = 0;
+		
+		int flags = PendingIntent.FLAG_UPDATE_CURRENT;
+		Intent intent = new Intent(this, MyLocationUpdateReceiver.class); // <-- MyLocationUpdateReceiver é um broadcast
+		PendingIntent pendingIntent = PendingIntent.getBroadcast(this,
+		locationUpdateRC, intent, flags);
+		locationManager.requestLocationUpdates(provider, tempoMinimoEntreAtualizacao,distanciaMinima, pendingIntent);
+		
+		//locationManager.removeUpdates(pendingIntent); //<-- se quiser remover é so usar
+	}
+	 */
 
 } 

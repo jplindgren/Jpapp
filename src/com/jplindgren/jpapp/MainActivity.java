@@ -17,13 +17,13 @@ import org.json.JSONObject;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -34,6 +34,7 @@ import android.widget.ListView;
 import com.jplindgren.jpapp.httpconnection.HttpNetworkConnection;
 import com.jplindgren.jpapp.model.Oferta;
 import com.jplindgren.jpapp.model.OfertaFactory;
+import com.jplindgren.jpapp.util.AlertUserDialog;
 import com.jplindgren.jpapp.util.OfertaListAdapter;
 
 @SuppressLint("NewApi")
@@ -58,51 +59,11 @@ public class MainActivity extends Activity  {
 	                 public void run() {	
 	                	 view.setAlpha(1);
 	                	 OpenOferta(selectedItem);
-	                /*
-	                	 Context context = getApplicationContext();
-	                	 CharSequence text = "+ 1 Hellow Wolrd!";
-	                	 int duration = Toast.LENGTH_SHORT;
-
-	                	 Toast toast = Toast.makeText(context, text, duration);
-	                	 toast.show();
-	                	 */
-	                 }
-	                 
+	                 }	                 
 	    		 });
 	         }		    	
 	    });
-		showList();
-		
-		/*
-		 final ListView listview = (ListView) findViewById(R.id.listview);
-		    String[] values = new String[] { "Android", "iPhone", "WindowsMobile",
-		        "Blackberry", "WebOS", "Ubuntu", "Windows7", "Max OS X",
-		        "Linux", "OS/2", "Ubuntu", "Windows7", "Max OS X", "Linux",
-		        "OS/2", "Ubuntu", "Windows7", "Max OS X", "Linux", "OS/2",
-		        "Android", "iPhone", "WindowsMobile" };
-		
-		    final ArrayList<String> list = new ArrayList<String>();
-		    for (int i = 0; i < values.length; ++i) {
-		      list.add(values[i]);
-		    }
-		    final StableArrayAdapter adapter = new StableArrayAdapter(this,android.R.layout.simple_list_item_1, list);
-		    listview.setAdapter(adapter);
-		    
-		    listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-		    	 @Override
-		         public void onItemClick(AdapterView<?> parent, final View view,int position, long id) {
-		    		 final String item = (String) parent.getItemAtPosition(position);
-		    		 view.animate().setDuration(1000).alpha(0).withEndAction(new Runnable() {
-		                 @Override
-		                 public void run() {
-		                   list.remove(item);
-		                   adapter.notifyDataSetChanged();
-		                   view.setAlpha(1);
-		                 }
-		    		 });
-		         }		    	
-		    });
-		    */
+		showList();		
 	}
 
     public void OpenOferta(Oferta oferta){
@@ -146,13 +107,16 @@ public class MainActivity extends Activity  {
     } 
     
     private void ShowMessage(){
+    	/*
     	AlertDialog.Builder builder = new AlertDialog.Builder(this);
     	// 2. Chain together various setter methods to set the dialog characteristics
     	builder.setMessage("Não há conexão! Habilite o 3g ou o Wifi")
     	       .setTitle("Nada feito");
     	// 3. Get the AlertDialog from create()
     	AlertDialog dialog = builder.create();
-    	dialog.show();
+    	*/
+    	AlertUserDialog alert = new AlertUserDialog("Não há conexão! Habilite o 3g ou o Wifi", Settings.ACTION_WIFI_SETTINGS);    	
+    	alert.show(getFragmentManager(),null);
     }
     
     public void openAnotherBehavior(){

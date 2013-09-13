@@ -2,7 +2,9 @@ package com.jplindgren.jpapp.location;
 
 import android.location.Criteria;
 import android.location.Location;
+import android.location.LocationListener;
 import android.location.LocationManager;
+import android.os.Looper;
 
 public class LocationClient {
 	LocationManager locationManager = null;
@@ -14,7 +16,6 @@ public class LocationClient {
 	public LocationClient(LocationManager locationManager){
 		this.locationManager = locationManager;
 	}
-	
 	
 	private Criteria getLocationProviderCriteria(){
 		/*Criteria criteria = new Criteria();
@@ -36,8 +37,6 @@ public class LocationClient {
 	public String getBestProvider(){	
 		String bestProvider = locationManager.getBestProvider(getLocationProviderCriteria(), true);
 		return bestProvider;
-		//LocationProvider locationProvider = locationManager.getProvider(bestProvider);
-		//return locationProvider;
 	} 
 	
 	public String getGpsProvider(){	
@@ -47,5 +46,20 @@ public class LocationClient {
 	public Location getLastKnowLocation(){
 		Location location = locationManager.getLastKnownLocation(getBestProvider());
 		return location;
+	}
+	
+	public boolean confirmProviderEnabled(){
+		boolean isAvailable = locationManager.isProviderEnabled(getBestProvider());			
+		return isAvailable;
+	}
+	
+	public void startListening(LocationListener myLocationListener, Looper looper){
+		int tempoMinimoEntreAtualizacao = 0; // milliseconds
+		int distanciaMinima = 0; // meters
+		getLocationManager().requestLocationUpdates(getBestProvider(), tempoMinimoEntreAtualizacao, distanciaMinima, myLocationListener, looper);
+	}
+	
+	public void stopListening(LocationListener myLocationListener){
+		getLocationManager().removeUpdates(myLocationListener);
 	}
 }
