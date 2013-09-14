@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.PendingIntent;
 import android.app.ProgressDialog;
@@ -16,6 +17,7 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.HandlerThread;
 import android.os.Looper;
@@ -233,10 +235,15 @@ public class ShowOfertaActivity extends Activity implements LocationSubscriber {
 				getHttpNetworkConnection().CheckWifiConnection();				
 	}
 	
+	@SuppressLint("NewApi")
 	private boolean confirmAirPlaineModeIsOff(){
-		boolean isOff = Settings.System.getInt(getContentResolver(), Settings.System.AIRPLANE_MODE_ON, 0) == 1;
-		
-		if (isOff){
+		boolean isOff = Settings.System.getInt(getContentResolver(), Settings.System.AIRPLANE_MODE_ON, 0) == 0;
+		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR1) {
+			isOff =  Settings.System.getInt(getContentResolver(), Settings.System.AIRPLANE_MODE_ON, 0) == 0;          
+	    } else {
+	    	isOff = Settings.Global.getInt(getContentResolver(), Settings.Global.AIRPLANE_MODE_ON, 0) == 0;
+	    }  		
+		if (!isOff){
 			AlertUserDialog alert = new AlertUserDialog("Por favor desabilite o modo avião", "");
 			alert.show(getFragmentManager(), null);
 		}
