@@ -14,7 +14,13 @@ import com.google.android.maps.MyLocationOverlay;
 import com.google.android.maps.Overlay;
 
 public class TestActivity extends MapActivity {
-	MapView map;
+
+	@Override
+	protected boolean isRouteDisplayed() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+	/*MapView map;
 	long start;
 	long stop;
 	MyLocationOverlay compass;
@@ -63,6 +69,6 @@ public class TestActivity extends MapActivity {
 		super.onResume();
 	}
 	
-	
+	*/
 
 }

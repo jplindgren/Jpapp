@@ -56,6 +56,7 @@ public class ShowOfertaActivity extends Activity implements LocationSubscriber {
 		
 		IntentFilter filter = new IntentFilter(TREASURE_PROXIMITY_ALERT);
 		registerReceiver(new ProximityIntentReceiver(), filter);
+		setProximityAlert();
 		
 		popularOferta();
 	}
@@ -89,13 +90,17 @@ public class ShowOfertaActivity extends Activity implements LocationSubscriber {
 		startActivity(intent);
 	}
 	
-	public void followOferta(View view){					
+	public void followOferta(View view){		
+		/*
 		LocationClient locationClient = getLocationClient();
 		
 		Location location = locationClient.getLastKnowLocation();
 		
 		updateCurrentLocationTextView(location);
 		requestLocationUpdatesUsingLocationListener(locationClient);
+		*/
+		Intent intent = new Intent(this, CompassAcivityNew.class);
+		startActivity(intent);
 	}
 	
 	public LocationClient getLocationClient(){
@@ -205,7 +210,7 @@ public class ShowOfertaActivity extends Activity implements LocationSubscriber {
 	}
 	
 	
-	private static final String TREASURE_PROXIMITY_ALERT = "com.paad.treasurealert";
+	private static final String TREASURE_PROXIMITY_ALERT = "com.jplindgren.jpapp.treasurealert";
 	private void setProximityAlert() {
 		double lat = -22.9065641;
 		double lng = -43.0867279;
