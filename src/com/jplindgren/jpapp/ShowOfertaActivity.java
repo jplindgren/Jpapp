@@ -11,6 +11,11 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.hardware.GeomagneticField;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
@@ -23,9 +28,12 @@ import android.os.HandlerThread;
 import android.os.Looper;
 import android.provider.Settings;
 import android.support.v4.app.NavUtils;
+import android.view.Display;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.Surface;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.TextView;
 
 import com.jplindgren.jpapp.broadcast.NetworkProviderStatusReceiver;
@@ -37,6 +45,7 @@ import com.jplindgren.jpapp.model.Oferta;
 import com.jplindgren.jpapp.servico.OfertaServico;
 import com.jplindgren.jpapp.servico.message.RequestGetOferta;
 import com.jplindgren.jpapp.util.AlertUserDialog;
+import com.jplindgren.jpapp.view.CompassView;
 
 public class ShowOfertaActivity extends Activity implements LocationSubscriber {
 	Looper looper;
@@ -46,6 +55,88 @@ public class ShowOfertaActivity extends Activity implements LocationSubscriber {
 	
 	LocationSubject myLocationListener;
 	ProgressDialog loadingDialog;
+	
+	GeomagneticField geoField;
+	
+	private float[] aValues = new float[3];
+	private float[] mValues = new float[3];
+	private CompassView compassView;
+	private SensorManager sensorManager;
+	private int rotation;
+	
+	private final SensorEventListener sensorEventListener = new SensorEventListener() {
+		public void onSensorChanged(SensorEvent event) {
+			if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER)
+				aValues = event.values;
+			if (event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD)
+				mValues = event.values;
+			updateOrientation(calculateOrientation());
+		}
+		public void onAccuracyChanged(Sensor sensor, int accuracy) {}
+	};
+	
+	private void initCompass(){
+		compassView = (CompassView)findViewById(R.id.compassView);
+		sensorManager = (SensorManager)getSystemService(Context.SENSOR_SERVICE);
+		String windoSrvc = Context.WINDOW_SERVICE;
+		WindowManager wm = ((WindowManager) getSystemService(windoSrvc));
+		Display display = wm.getDefaultDisplay();
+		rotation = display.getRotation();
+		updateOrientation(new float[] {0, 0, 0});
+	}
+	
+	private void resumeCompass(){		
+		Sensor accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+		Sensor magField = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
+		sensorManager.registerListener(sensorEventListener, accelerometer, SensorManager.SENSOR_DELAY_FASTEST);
+		sensorManager.registerListener(sensorEventListener, magField,SensorManager.SENSOR_DELAY_FASTEST);
+	}
+	
+	private void pauseCompass(){
+		sensorManager.unregisterListener(sensorEventListener);
+	}
+	
+	private void updateOrientation(float[] values) {
+		if (compassView != null) {
+			compassView.setBearing(values[0]);
+			//compassView.setPitch(values[1]);
+			compassView.setRoll(-values[2]);
+			compassView.invalidate();
+		}
+	}
+	
+	private float[] calculateOrientation() {
+		float[] values = new float[3];
+		float[] inR = new float[9];
+		float[] outR = new float[9];
+		// Determine the rotation matrix
+		SensorManager.getRotationMatrix(inR, null, aValues, mValues);
+		// Remap the coordinates based on the natural device orientation.
+		int x_axis = SensorManager.AXIS_X;
+		int y_axis = SensorManager.AXIS_Y;
+		switch (rotation) {
+			case (Surface.ROTATION_90):
+				x_axis = SensorManager.AXIS_Y;
+				y_axis = SensorManager.AXIS_MINUS_X;
+				break;
+			case (Surface.ROTATION_180):
+				y_axis = SensorManager.AXIS_MINUS_Y;
+				break;
+			case (Surface.ROTATION_270):
+				x_axis = SensorManager.AXIS_MINUS_Y;
+				y_axis = SensorManager.AXIS_X;
+				break;
+			default: break;
+		}
+		SensorManager.remapCoordinateSystem(inR, x_axis, y_axis, outR);
+		// Obtain the current, corrected orientation.
+		SensorManager.getOrientation(outR, values);
+		// Convert from Radians to Degrees.
+		values[0] = (float) Math.toDegrees(values[0]);
+		values[1] = (float) Math.toDegrees(values[1]);
+		values[2] = (float) Math.toDegrees(values[2]);
+		return values;
+	}
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -59,6 +150,8 @@ public class ShowOfertaActivity extends Activity implements LocationSubscriber {
 		setProximityAlert();
 		
 		popularOferta();
+		
+		initCompass();
 	}
 	
 	@Override
@@ -68,7 +161,16 @@ public class ShowOfertaActivity extends Activity implements LocationSubscriber {
 		this.runOnUiThread(new Runnable() {			
 			@Override
 			public void run() {
-				updateCurrentLocationTextView(theLocation);				
+				updateCurrentLocationTextView(theLocation);
+				
+				geoField = new GeomagneticField(
+				         Double.valueOf(theLocation.getLatitude()).floatValue(),
+				         Double.valueOf(theLocation.getLongitude()).floatValue(),
+				         Double.valueOf(theLocation.getAltitude()).floatValue(),
+				         System.currentTimeMillis()
+				      );
+				
+				compassView.setHeading(geoField.getDeclination());
 			}
 		});		
 	}
@@ -91,14 +193,6 @@ public class ShowOfertaActivity extends Activity implements LocationSubscriber {
 	}
 	
 	public void followOferta(View view){		
-		/*
-		LocationClient locationClient = getLocationClient();
-		
-		Location location = locationClient.getLastKnowLocation();
-		
-		updateCurrentLocationTextView(location);
-		requestLocationUpdatesUsingLocationListener(locationClient);
-		*/
 		Intent intent = new Intent(this, CompassAcivityNew.class);
 		startActivity(intent);
 	}
@@ -124,12 +218,16 @@ public class ShowOfertaActivity extends Activity implements LocationSubscriber {
 	protected void onPause() {
 		cleanResources();
 		super.onPause();
+		
+		pauseCompass();
 	}
 
 	@Override
 	protected void onResume() {
 		requestLocationUpdatesUsingLocationListener(getLocationClient());
 		super.onResume();
+		
+		resumeCompass();
 	}	
 	
 	@Override

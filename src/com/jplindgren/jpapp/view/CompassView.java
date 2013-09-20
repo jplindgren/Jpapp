@@ -132,6 +132,12 @@ public class CompassView extends View{
 		canvas.rotate(-1*(bearing), px, py);
 		
 		/*
+		 * teste para setar longitude latitude
+		 */
+		heading = bearing - (bearing + heading);
+		int testeNewHeading = Math.round(-heading / 360 + 180);
+		canvas.rotate(testeNewHeading, px, py);
+		/*
 		canvas.drawLine(px, py,
 				   (float)(px + px * Math.sin((double)(-bearing) * 3.14/180)),
 				   (float)(px - radius * Math.cos((double)(-bearing) * 3.14/180)),
@@ -194,7 +200,8 @@ public class CompassView extends View{
 		canvas.restore();
 		
 		canvas.save();
-		canvas.rotate(-1*(bearing), px, py);
+		//canvas.rotate(-1*(bearing), px, py);
+		canvas.rotate(heading, px, py);
 		// Should this be a double?
 		double increment = 22.5;
 		for (double i = 0; i < 360; i += increment) {
@@ -248,6 +255,15 @@ public class CompassView extends View{
 		return result;
 	}
 	
+	
+	private float heading;
+	///Responsavel pela movimentacao da bússola
+	public void setHeading(float _heading) {
+		bearing = _heading;
+	}
+	public float getHeading() {
+		return bearing;
+	}
 	private float bearing;
 	///Responsavel pela movimentacao da bússola
 	public void setBearing(float _bearing) {

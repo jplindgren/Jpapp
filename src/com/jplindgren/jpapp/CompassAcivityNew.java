@@ -12,6 +12,7 @@ import android.view.Menu;
 import android.view.Surface;
 import android.view.WindowManager;
 
+import com.jplindgren.jpapp.location.LocationClient;
 import com.jplindgren.jpapp.view.CompassView;
 
 public class CompassAcivityNew extends Activity {
@@ -51,12 +52,8 @@ public class CompassAcivityNew extends Activity {
 		super.onResume();
 		Sensor accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
 		Sensor magField = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
-		sensorManager.registerListener(sensorEventListener,
-		accelerometer,
-		SensorManager.SENSOR_DELAY_FASTEST);
-		sensorManager.registerListener(sensorEventListener,
-		magField,
-		SensorManager.SENSOR_DELAY_FASTEST);
+		sensorManager.registerListener(sensorEventListener, accelerometer, SensorManager.SENSOR_DELAY_FASTEST);
+		sensorManager.registerListener(sensorEventListener, magField,SensorManager.SENSOR_DELAY_FASTEST);
 	}
 	
 	@Override
