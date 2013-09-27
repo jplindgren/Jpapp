@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 import java.util.Date;
 
 public class Oferta {
-	private int id;
+	private long id;
 	private String nomeProduto;
 	private BigDecimal preco;
 	private String nomeLoja;
@@ -13,7 +13,7 @@ public class Oferta {
 	private String categoria;
 	private Date dataPublicacao;
 	
-	public Oferta(int id, String nome, BigDecimal preco, String nomeLoja, double longitude, 
+	public Oferta(long id, String nome, BigDecimal preco, String nomeLoja, double longitude, 
 					double latidute, String categoria, Date dataPublicacao){
 		this.id = id;
 		this.nomeProduto = nome;
@@ -25,7 +25,7 @@ public class Oferta {
 		this.dataPublicacao = dataPublicacao;
 	}
 	
-	public int getId() {
+	public long getId() {
 		return id;
 	}
 	

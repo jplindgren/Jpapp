@@ -1,5 +1,7 @@
 <resources>
 
+    <color name="splash_screen_background">#00000000</color>
+    
     <color name="black_overlay">#66000000</color>
 
     <!-- Compass Impl -->	

@@ -3,6 +3,7 @@
 
     <string name="app_name">JP App</string>
     <string name="action_settings">Configurações</string>
+    <string name="splashScreen">Promo Hunder</string>
     <string name="title_activity_display_message">DisplayMessageActivity</string>
     <string name="send_button">Enviar</string>
     <string name="go_button">GO!</string>
@@ -36,4 +37,9 @@
     <string name="title_activity_compass_activity_terceira_tentativa">CompassActivityTerceiraTentativa</string>
     <string name="title_activity_compass_activity_quarta_tentativa_image">CompassActivityQuartaTentativaImage</string>
 
+    <string-array name="context_menu_oferta_array">
+        <item>Seguir</item>
+        <item>Ver Mapa</item>
+        <item>Ver Detalhes</item>
+    </string-array>
 </resources>

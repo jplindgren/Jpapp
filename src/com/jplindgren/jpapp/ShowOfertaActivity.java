@@ -56,6 +56,7 @@ public class ShowOfertaActivity extends Activity implements LocationSubscriber {
 	LocationSubject myLocationListener;
 	ProgressDialog loadingDialog;
 	
+	/*
 	GeomagneticField geoField;
 	
 	private float[] aValues = new float[3];
@@ -63,6 +64,7 @@ public class ShowOfertaActivity extends Activity implements LocationSubscriber {
 	private CompassView compassView;
 	private SensorManager sensorManager;
 	private int rotation;
+	
 	
 	private final SensorEventListener sensorEventListener = new SensorEventListener() {
 		public void onSensorChanged(SensorEvent event) {
@@ -74,7 +76,7 @@ public class ShowOfertaActivity extends Activity implements LocationSubscriber {
 		}
 		public void onAccuracyChanged(Sensor sensor, int accuracy) {}
 	};
-	
+		
 	private void initCompass(){
 		compassView = (CompassView)findViewById(R.id.compassView);
 		sensorManager = (SensorManager)getSystemService(Context.SENSOR_SERVICE);
@@ -137,6 +139,7 @@ public class ShowOfertaActivity extends Activity implements LocationSubscriber {
 		values[2] = (float) Math.toDegrees(values[2]);
 		return values;
 	}
+	*/
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -151,7 +154,7 @@ public class ShowOfertaActivity extends Activity implements LocationSubscriber {
 		
 		popularOferta();
 		
-		initCompass();
+		//initCompass();
 	}
 	
 	@Override
@@ -163,6 +166,7 @@ public class ShowOfertaActivity extends Activity implements LocationSubscriber {
 			public void run() {
 				updateCurrentLocationTextView(theLocation);
 				
+				/*
 				geoField = new GeomagneticField(
 				         Double.valueOf(theLocation.getLatitude()).floatValue(),
 				         Double.valueOf(theLocation.getLongitude()).floatValue(),
@@ -171,6 +175,7 @@ public class ShowOfertaActivity extends Activity implements LocationSubscriber {
 				      );
 				
 				compassView.setHeading(geoField.getDeclination());
+				*/
 			}
 		});		
 	}
@@ -219,7 +224,7 @@ public class ShowOfertaActivity extends Activity implements LocationSubscriber {
 		cleanResources();
 		super.onPause();
 		
-		pauseCompass();
+		//pauseCompass();
 	}
 
 	@Override
@@ -227,7 +232,7 @@ public class ShowOfertaActivity extends Activity implements LocationSubscriber {
 		requestLocationUpdatesUsingLocationListener(getLocationClient());
 		super.onResume();
 		
-		resumeCompass();
+		//resumeCompass();
 	}	
 	
 	@Override
@@ -321,7 +326,7 @@ public class ShowOfertaActivity extends Activity implements LocationSubscriber {
 	
 	private void popularOferta(){
 		Intent intent = getIntent();
-		int idOferta = intent.getIntExtra(MainActivity.ID_OFERTA_SELECIONADA, 0);
+		long idOferta = intent.getLongExtra(MainActivity.ID_OFERTA_SELECIONADA, 0);
 		new GetAsyncDataTask(this).execute(new RequestGetOferta(idOferta));
 	}
 

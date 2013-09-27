@@ -36,13 +36,18 @@
             android:value="AIzaSyAsNtmFqHm4FCPBlfJEp8PZhSFVE2UeAa4" />
 
         <activity
-            android:name="com.jplindgren.jpapp.MainActivity"
-            android:label="@string/app_name" >
+            android:name="com.jplindgren.jpapp.SplashScreen"
+            android:label="@string/splashScreen" 
+            android:screenOrientation="portrait"
+            android:theme="@android:style/Theme.Black.NoTitleBar" >>
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+        </activity>
+        <activity
+            android:name="com.jplindgren.jpapp.MainActivity"
+            android:label="@string/app_name" >
         </activity>
         <activity
             android:name="com.jplindgren.jpapp.DisplayMessageActivity"

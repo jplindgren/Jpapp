@@ -4,12 +4,10 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.math.BigDecimal;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Date;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -25,15 +23,20 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.util.Log;
+import android.view.ContextMenu;
+import android.view.ContextMenu.ContextMenuInfo;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
+import android.widget.AdapterView.OnItemLongClickListener;
 import android.widget.ListView;
 
 import com.jplindgren.jpapp.httpconnection.HttpNetworkConnection;
 import com.jplindgren.jpapp.model.Oferta;
 import com.jplindgren.jpapp.model.OfertaFactory;
+import com.jplindgren.jpapp.model.ParcelableOferta;
 import com.jplindgren.jpapp.util.AlertUserDialog;
 import com.jplindgren.jpapp.util.OfertaListAdapter;
 
@@ -43,35 +46,44 @@ public class MainActivity extends Activity  {
 	ListView listview;
 	public final static String ID_OFERTA_SELECIONADA = "com.jplindgren.jpapp.IdOfertaSelecionada";
 	public ProgressDialog loadingDialog;
+	
+	private OnItemClickListener ofertaListViewClick = new AdapterView.OnItemClickListener() {
+		@Override
+		public void onItemClick(AdapterView<?> parent, final View view,int position, long id) {
+			final Oferta selectedItem = (Oferta) parent.getItemAtPosition(position);
+   		 	view.animate().setDuration(100).alpha(0).withEndAction(new Runnable() {
+   		 		@Override
+                public void run() {	
+   		 			view.setAlpha(1);
+   		 			OpenOferta(selectedItem);
+   		 		}	                 
+   		 	});
+        }		
+	};
+	
+	private OnItemLongClickListener ofertaListViewLongClick = new AdapterView.OnItemLongClickListener() {
+		@Override
+		public boolean onItemLongClick(AdapterView<?> parent, final View view, int arg2, long arg3) {
+			return false;
+		}		
+	};
+	
   
     @Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_main);
-		
-		
-		Intent intent = new Intent(this, CompassAcivityNew.class);
-		startActivity(intent);
+		setContentView(R.layout.activity_main); 
 		
 		listview = (ListView) findViewById(R.id.listview);
-		listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-	    	 @Override
-	         public void onItemClick(AdapterView<?> parent, final View view,int position, long id) {
-	    		 final Oferta selectedItem = (Oferta) parent.getItemAtPosition(position);
-	    		 view.animate().setDuration(1000).alpha(0).withEndAction(new Runnable() {
-	                 @Override
-	                 public void run() {	
-	                	 view.setAlpha(1);
-	                	 OpenOferta(selectedItem);
-	                 }	                 
-	    		 });
-	         }		    	
-	    });
-		showList();		
+		showList(listview);
+		
+		listview.setOnItemClickListener(ofertaListViewClick);
+		listview.setOnItemLongClickListener(ofertaListViewLongClick);
+		registerForContextMenu(listview);
 	}
 
     public void OpenOferta(Oferta oferta){
-    	Intent intent = new Intent(this,ShowOfertaActivity.class);
+    	Intent intent = new Intent(getBaseContext(),ShowOfertaActivity.class);
     	intent.putExtra(ID_OFERTA_SELECIONADA, oferta.getId());
     	startActivity(intent);
     }
@@ -106,20 +118,12 @@ public class MainActivity extends Activity  {
 		if (isConnected){
 			new GetAsyncDataTask(this).execute("http://restapi-2.apphb.com/oferta/ofertasdodia");
 		}else{
-			ShowMessage();		
+			ShowMessage("Não há conexão! Que tal habilitar o 3g ou o Wifi? ;)", Settings.ACTION_WIFI_SETTINGS);		
 		}
     } 
     
-    private void ShowMessage(){
-    	/*
-    	AlertDialog.Builder builder = new AlertDialog.Builder(this);
-    	// 2. Chain together various setter methods to set the dialog characteristics
-    	builder.setMessage("Não há conexão! Habilite o 3g ou o Wifi")
-    	       .setTitle("Nada feito");
-    	// 3. Get the AlertDialog from create()
-    	AlertDialog dialog = builder.create();
-    	*/
-    	AlertUserDialog alert = new AlertUserDialog("Não há conexão! Habilite o 3g ou o Wifi", Settings.ACTION_WIFI_SETTINGS);    	
+    private void ShowMessage(String message, String settingsActivityAction){
+    	AlertUserDialog alert = new AlertUserDialog(message, settingsActivityAction);    	
     	alert.show(getFragmentManager(),null);
     }
     
@@ -128,17 +132,51 @@ public class MainActivity extends Activity  {
     	startActivity(intent);
     } 
     
-	private void showList() {		 
+	private void showList(ListView listview) {		 
 		ArrayList<Oferta> ofertaList = new ArrayList<Oferta>();
-		ofertaList.clear();
-		ofertaList.add(new Oferta(1,"Calça Jeans Levi´s", new BigDecimal("99.99"),null,0,0,"categoria",new Date()));
-		ofertaList.add(new Oferta(2,"Casaco Calvin Klein", new BigDecimal("299.99"),null,0,0,"categoria",new Date()));
-		ofertaList.add(new Oferta(3,"Edredon Swingão", new BigDecimal("39.99"),null,0,0,"categoria",new Date()));
-		ofertaList.add(new Oferta(4,"Jogo Assasin´s Creed", new BigDecimal("69.99"),null,0,0,"categoria",new Date()));
-		ofertaList.add(new Oferta(5,"Camisa do Brasil", new BigDecimal("149.99"),null,0,0,"categoria",new Date()));
+		
+		ArrayList<ParcelableOferta> ofertasExtra = getIntent().getParcelableArrayListExtra("preFetchedOfertas");
+		for (ParcelableOferta parcelableOferta : ofertasExtra){
+			ofertaList.add(parcelableOferta.getOferta());
+		}
+		
+		if (ofertaList.size() == 0){
+			ShowMessage("Nenhuma oferta encontrada, tem certeza que seu wifi ou 3g estão ligados? ;)", Settings.ACTION_WIFI_SETTINGS);
+		}
+		
 		OfertaListAdapter ofertaListAdapter = new OfertaListAdapter(MainActivity.this, ofertaList);
-		listview.setAdapter(ofertaListAdapter);	 
-	 }
+		listview.setAdapter(ofertaListAdapter);					 
+	}
+	
+	@Override
+	public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
+		if (v.getId() == R.id.listview) {
+			AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo)menuInfo;
+			Oferta selectedItem = (Oferta)listview.getItemAtPosition(info.position);
+			menu.setHeaderTitle(selectedItem.getNomeProduto());
+			String[] menuItems = getResources().getStringArray(R.array.context_menu_oferta_array);
+			for (int i = 0; i<menuItems.length; i++) {
+				menu.add(Menu.NONE, i, i, menuItems[i]);
+			}
+		}
+	}
+	
+	@Override
+	public boolean onContextItemSelected(MenuItem item) {
+		AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo)item.getMenuInfo();
+		int menuItemIndex = item.getItemId();
+		String[] menuItems = getResources().getStringArray(R.array.context_menu_oferta_array);
+		String menuItemName = menuItems[menuItemIndex];
+		
+		Oferta selectedItem = (Oferta)listview.getItemAtPosition(info.position);
+		if (menuItemName.equals("Ver Detalhes")){						
+			OpenOferta(selectedItem);
+		}else{
+			ShowMessage(String.format("Selected %s for item %s", menuItemName, selectedItem) , null);
+		}
+		
+		return true;
+	}
     
 	private class GetAsyncDataTask extends AsyncTask<String, Void, ArrayList<Oferta>> {
 		  Context context;

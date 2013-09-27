@@ -7,6 +7,7 @@ import android.app.DialogFragment;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.provider.Settings;
 
 @SuppressLint("ValidFragment")
 public class AlertUserDialog extends DialogFragment implements DialogInterface.OnClickListener{
@@ -34,9 +35,9 @@ public class AlertUserDialog extends DialogFragment implements DialogInterface.O
 	public void onClick(DialogInterface dialogInterface, int i) {
 		switch(i){
 		case Dialog.BUTTON_POSITIVE : 
-			if(settingsActivityAction != null)
+			if(settingsActivityAction.equals(Settings.ACTION_WIFI_SETTINGS))
 				dialogInterface.cancel();
-				//startActivity(new Intent(settingsActivityAction));
+				startActivity(new Intent(settingsActivityAction));
 			break;
 		}
 	}

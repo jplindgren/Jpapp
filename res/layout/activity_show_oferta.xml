@@ -50,19 +50,6 @@
         android:layout_marginBottom="64dp"
         android:onClick="goActivity"
         android:text="Teste Swipe Screen" />
-    
-    <LinearLayout
-      android:id="@+id/left_layout"
-      android:layout_width="match_parent"
-      android:layout_height="match_parent"
-      android:layout_alignParentLeft="true"
-      android:orientation="vertical">
-        
-        	<com.jplindgren.jpapp.view.CompassView
-				android:id="@+id/compassView"
-				android:layout_width="match_parent"
-				android:layout_height="match_parent"/>   
-    </LinearLayout>
 
 
 </RelativeLayout>

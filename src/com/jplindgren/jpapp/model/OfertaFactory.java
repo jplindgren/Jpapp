@@ -34,4 +34,9 @@ public class OfertaFactory {
 		
 		return oferta;
 	}
+	
+	public static Oferta Criar(long idOferta, String nomeProduto, BigDecimal preco, String nomeLoja, double longitude, double latitude, 
+			String nomeCategoria, Date dataPublicacao){
+		return new Oferta(idOferta,nomeProduto, preco, nomeLoja,longitude,latitude, nomeCategoria, dataPublicacao);
+	}
 }
